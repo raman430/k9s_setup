@@ -1,0 +1,5 @@
+apiVersion: v2
+name: myservice
+description: A sample microservice deployed via Helm
+version: 0.1.0
+appVersion: "1.0.0"
