@@ -2,92 +2,90 @@
 
 This section documents all issues encountered during the microservice deployment via Helm + ArgoCD + Ingress setup, along with step-by-step verification, solutions, and final working state.
 
-⚠️ ISSUES ENCOUNTERED & HOW WE FIXED THEM
+⚠️ Issues Encountered & How We Fixed Them
 
-1. ❌ InvalidImageName in Pod
+1. Invalid Image Name in Pod
 
-Cause: values.yaml had image: raman430/myservice:latest:latest
+Symptom: InvalidImageName in pod status.
+
+Cause: values.yaml had image: raman430/myservice:latest:latest.
 
 Fix:
 
-Corrected to tag: latest
+Corrected to tag: latest.
 
 Rebuilt and pushed Docker image:
 
 docker build -t raman430/myservice:latest ./app
 docker push raman430/myservice:latest
 
-2. ❌ 503 Service Temporarily Unavailable from Ingress
+2. 503 Service Temporarily Unavailable from Ingress
 
-Cause: Ingress couldn't reach backend service
+Symptom: curl http://myservice.local returns a 503 error.
 
-Verifications:
-
-Pod running: kubectl get pods
-
-Service status:
-
-kubectl get svc myservice -o yaml
-
-Ingress routing:
-
-kubectl describe ingress myservice-ingress
+Cause: Ingress couldn’t reach backend service due to port mismatch.
 
 Fix:
 
-Corrected targetPort: http in service.yaml
+Verified pod and service:
 
-Ensured Deployment has:
+kubectl get pods
+kubectl get svc myservice -o yaml
+
+Corrected targetPort to match the named port http.
+
+Ensured container port in deployment uses:
 
 ports:
   - name: http
     containerPort: 5000
 
-Corrected ingress.yaml:
+Updated Ingress backend to use service port 80.
 
-port:
-  number: 80
+3. DNS_PROBE_POSSIBLE in Browser
 
-3. ❌ DNS_PROBE_POSSIBLE in Browser
+Symptom: myservice.local not resolving in Chrome.
 
-Cause: Browser couldn’t resolve myservice.local
+Cause: Chrome in Windows not honoring WSL2 /etc/hosts entry.
 
 Fix:
 
-Added to /etc/hosts:
+Verified /etc/hosts:
 
 echo "127.0.0.1 myservice.local" | sudo tee -a /etc/hosts
 
-Access via CLI (WSL2):
+Used curl inside WSL:
 
 curl http://myservice.local
 
-For browser, used NodePort or minikube service:
+For browser access, used:
 
 minikube service myservice --url
 
-4. ❌ YAML Indentation Errors in values.yaml
+4. YAML Indentation Errors in values.yaml
 
-Error:
+Error: "All mapping items must start at the same column."
 
-All mapping items must start at the same column
+Cause: Used annotations: {} followed by indented fields.
 
-Fix: Removed annotations: {} and replaced with correct indentation:
+Fix: Replaced with:
 
 annotations:
   nginx.ingress.kubernetes.io/rewrite-target: /
 
-5. ❌ Helm Chart Drift vs ArgoCD
+5. Helm Chart Drift vs ArgoCD Sync
 
-Fix: Committed working changes after local testing:
+Issue: Changes deployed manually not synced in ArgoCD.
+
+Fix: Committed all working files:
 
 git add charts/myservice
 git commit -m "Fix port mapping and ingress rewrite"
 git push origin main
 
-✅ FINAL CONFIGURATION CHANGES
+✅ Final Configuration Changes
 
-✅ values.yaml
+values.yaml
 
 image:
   repository: raman430/myservice
@@ -113,14 +111,14 @@ ingress:
         - path: /
           pathType: Prefix
 
-✅ deployment.yaml
+deployment.yaml
 
 ports:
   - name: http
     containerPort: {{ .Values.containerPort }}
     protocol: TCP
 
-✅ service.yaml
+service.yaml
 
 ports:
   - name: http
@@ -128,7 +126,7 @@ ports:
     targetPort: http
     protocol: TCP
 
-✅ ingress.yaml
+ingress.yaml
 
 rules:
   - host: {{ .Values.ingress.hostname }}
@@ -142,42 +140,42 @@ rules:
               port:
                 number: {{ .Values.service.port }}
 
-✅ KEY COMMANDS USED
+🧪 Key Commands Used
 
-# Docker Build & Push
+# Build and Push Docker Image
 cd app
 docker build -t raman430/myservice:latest .
 docker push raman430/myservice:latest
 
-# Helm Install/Upgrade
+# Upgrade Helm Chart
 helm upgrade --install myservice ./charts/myservice
 
-# Check Pod & Service
+# Check Kubernetes Resources
 kubectl get pods
 kubectl get svc
 kubectl describe ingress myservice-ingress
 
-# Local DNS mapping
-sudo nano /etc/hosts
-# Add: 127.0.0.1 myservice.local
-
-# Minikube Tunnel
+# Run Minikube Tunnel
 minikube tunnel
 
-# Test Endpoint
+# Test DNS Mapping
 curl http://myservice.local
 
-🎯 LESSONS LEARNED
+# Open Service via Minikube (Browser-friendly)
+minikube service myservice --url
 
-Always match targetPort in service to either a valid number or a named port in deployment
+🎯 Lessons Learned
 
-containerPort goes into deployment, not service block
+Always align targetPort in service with either a named port or actual container port
 
-Browsers in Windows may not respect /etc/hosts in WSL2 — test with curl
+Define named ports in container (http) and use that in service
 
-YAML indentation is critical — avoid using {} with multi-line mappings
+YAML indentation matters — avoid inline {} if nesting child keys
 
-Commit after verified success to avoid ArgoCD drift
+Browsers don’t always respect /etc/hosts in WSL2 — use curl or NodePort for testing
 
-Ingress paths need rewrite annotation + correct backend service/port mapping
+ArgoCD tracks Git — local Helm changes must be pushed to persist
 
+Ingress needs rewrite-target: / annotation and proper port mapping
+
+✅ This doc serves as a go-to reference for Helm-based microservice debugging with Ingress and GitOps.
