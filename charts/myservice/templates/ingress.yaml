@@ -17,5 +17,5 @@ spec:
               service:
                 name: {{ include "myservice.fullname" . }}
                 port:
-                  number: 5000
+                  number: {{ .Values.service.port }}
 {{- end }}
