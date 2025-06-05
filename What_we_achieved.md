@@ -122,3 +122,148 @@ kubectl get hpa
 kubectl describe hpa myservice
 
 🔥 Simulate Load
+
+########################################################
+########################################################
+
+🧪 Cluster Health Check & Validation (Daily Startup Checklist)
+1. ✅ Minikube Status
+bash
+Copy
+Edit
+minikube status
+✔️ All components should be Running
+
+If not:
+
+bash
+Copy
+Edit
+minikube start --driver=docker
+2. ✅ Tunnel (for Ingress)
+bash
+Copy
+Edit
+minikube tunnel
+Run this in a new terminal window every time you reboot.
+
+3. ✅ Kubernetes Nodes
+bash
+Copy
+Edit
+kubectl get nodes -o wide
+✔️ Should show status as Ready
+
+If not:
+
+Wait a few seconds, or
+
+Restart minikube:
+
+bash
+Copy
+Edit
+minikube stop && minikube start --driver=docker
+4. ✅ Check Argo CD Core Components
+bash
+Copy
+Edit
+kubectl get pods -n argocd
+✔️ Pods should be in Running state
+
+If not:
+
+bash
+Copy
+Edit
+kubectl rollout restart deployment argocd-repo-server -n argocd
+kubectl rollout restart deployment argocd-server -n argocd
+5. ✅ Argo CD Application Status
+bash
+Copy
+Edit
+kubectl get applications -n argocd
+kubectl describe application myservice -n argocd
+✔️ Status should show Synced and Healthy
+
+If not:
+
+bash
+Copy
+Edit
+kubectl apply -f gitops/myservice-app.yaml
+6. ✅ Check MyService Pods
+bash
+Copy
+Edit
+kubectl get pods
+✔️ Pod should be Running
+
+If not:
+
+bash
+Copy
+Edit
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+7. ✅ Ingress Controller
+bash
+Copy
+Edit
+kubectl get pods -n ingress-nginx
+✔️ NGINX controller should be running
+
+If not:
+
+bash
+Copy
+Edit
+helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
+8. ✅ Ingress Rule & Host Mapping
+bash
+Copy
+Edit
+kubectl get ingress
+cat /etc/hosts | grep myservice.local
+✔️ Should resolve to 127.0.0.1 myservice.local
+
+If not:
+
+bash
+Copy
+Edit
+echo "127.0.0.1 myservice.local" | sudo tee -a /etc/hosts
+9. ✅ Curl the Service
+bash
+Copy
+Edit
+curl http://myservice.local
+✔️ Should return: Hello from K8s with Helm & GitOps!
+
+If not:
+
+Check if pod is up
+
+Confirm Ingress exists
+
+Restart tunnel: minikube tunnel
+
+10. ✅ HPA Status
+bash
+Copy
+Edit
+kubectl get hpa
+kubectl describe hpa myservice
+✔️ Should list the HPA resource
+
+If not:
+
+Verify metrics-server:
+
+bash
+Copy
+Edit
+minikube addons enable metrics-server
+Re-apply the Helm chart if needed
+
