@@ -184,4 +184,13 @@ kubectl apply -f gitops/myservice-app.yaml
 
 ---
 
-Let me know if you'd like this as a `.sh` script or with comments for automation.
+## Start the Minikube cluster & various commands
+minikube start --driver=docker
+
+minikube stop
+
+kubectl get pods -A
+
+minikube status
+
+
