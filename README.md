@@ -191,52 +191,52 @@ Keep your local Kubernetes development environment smooth and consistent with th
 🟢 1. Start Minikube
 
 Ensure Docker is running, then start Minikube:
-
+```
 minikube start --driver=docker
-
+```
 🔄 2. Start Minikube Tunnel (in a separate terminal)
 
 Required to expose services via Ingress:
-
+```
 minikube tunnel
-
+```
 Keep this running while working. It’s necessary for ingress traffic routing.
 
 🛠 3. Fix /etc/hosts (Run after every WSL restart)
 
 WSL resets /etc/hosts frequently. Add your custom hostname back:
-
+```
 echo '127.0.0.1 myservice.local' | sudo tee -a /etc/hosts > /dev/null
-
+```
 Re-run this daily unless step 4 is applied.
 
 🧷 4. (Optional) Make /etc/hosts Persistent
 
 Prevent WSL from regenerating /etc/hosts:
-
+```
 sudo nano /etc/wsl.conf
-
+```
 Paste:
-
+```
 [network]
 generateHosts = false
-
+```
 Then shut down WSL:
-
+```
 wsl --shutdown
-
+```
 📦 5. Verify Kubernetes Resources
 
 Ensure your cluster is healthy:
-
+```
 kubectl get pods
 kubectl get svc
 kubectl get ingress
-
+```
 🔍 6. Troubleshoot CrashLoopBackOff & Probes
 
 Edit your Helm chart values:
-
+```
 livenessProbe:
   httpGet:
     path: /healthz
@@ -245,33 +245,33 @@ readinessProbe:
   httpGet:
     path: /readyz
     port: 5000
-
+```
 Make sure your Flask app has these endpoints defined.
 
 🧪 7. Test Endpoint Inside WSL
 
 Check your app is running correctly:
-
+```
 curl http://myservice.local
-
+```
 Expected:
-
+```
 Hello from K8s with Helm & GitOps!
-
+```
 🌐 8. Access Service via Browser on Windows
-
+```
 minikube service myservice --url
-
+```
 Copy the output URL (e.g., http://127.0.0.1:5000) and open in your Windows browser.
 
 🔁 9. Re-deploy Helm Chart (After Any Changes)
-
+```
 helm upgrade --install myservice ./charts/myservice
-
+```
 🧭 10. (Optional) Port-forward ArgoCD
-
+```
 kubectl port-forward svc/argocd-server -n argocd 8080:443
-
+```
 Then open: https://localhost:8080
 
 ✅ Summary
