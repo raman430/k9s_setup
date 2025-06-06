@@ -184,76 +184,73 @@ kubectl apply -f gitops/myservice-app.yaml
 
 ---
 
-✅ Daily Checklist: Minikube + WSL Dev Environment
+🚀 Minikube + WSL Dev Environment: Daily Checklist
 
-Before starting any Kubernetes development or testing with Minikube inside WSL, follow this checklist to ensure everything works smoothly.
+Keep your local Kubernetes development environment smooth and consistent with this curated checklist for WSL + Minikube users. Ideal for GitOps and Helm-based workflows.
 
-✅ 1. Start Minikube
+🟢 1. Start Minikube
+
+Ensure Docker is running, then start Minikube:
 
 minikube start --driver=docker
 
-✅ Ensure Docker is running before starting Minikube.
+🔄 2. Start Minikube Tunnel (in a separate terminal)
 
-✅ 2. Start Minikube Tunnel (in a separate terminal)
+Required to expose services via Ingress:
 
 minikube tunnel
 
-✅ Required for ingress to route traffic. Keep this terminal open.
+Keep this running while working. It’s necessary for ingress traffic routing.
 
-✅ 3. Fix /etc/hosts DNS mapping (Run Every Time WSL is Restarted)
+🛠 3. Fix /etc/hosts (Run after every WSL restart)
+
+WSL resets /etc/hosts frequently. Add your custom hostname back:
 
 echo '127.0.0.1 myservice.local' | sudo tee -a /etc/hosts > /dev/null
 
-WSL overwrites /etc/hosts on every restart. You must reapply this.
+Re-run this daily unless step 4 is applied.
 
-✅ 4. (Optional One-Time) Prevent WSL from Overwriting /etc/hosts
+🧷 4. (Optional) Make /etc/hosts Persistent
+
+Prevent WSL from regenerating /etc/hosts:
 
 sudo nano /etc/wsl.conf
 
-Insert:
+Paste:
 
 [network]
 generateHosts = false
 
-Then restart WSL:
+Then shut down WSL:
 
 wsl --shutdown
 
-✅ Do this only if you're okay with manual /etc/hosts persistence.
+📦 5. Verify Kubernetes Resources
 
-✅ 5. Validate All Kubernetes Resources Are Running
+Ensure your cluster is healthy:
 
-kubectl get pods -o wide
+kubectl get pods
 kubectl get svc
 kubectl get ingress
 
-🔍 Check that pods are in Running state and ingress has an IP (127.0.0.1 usually).
+🔍 6. Troubleshoot CrashLoopBackOff & Probes
 
-✅ 6. Troubleshoot Failing Pods (CrashLoopBackOff)
-
-Run:
-
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
-
-Common Issues:
-
-❌ Liveness/Readiness probe path mismatch (/healthz, /readyz) — return 404
-
-❌ Wrong container port in service or ingress
-
-✅ Fix by updating values.yaml:
+Edit your Helm chart values:
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /healthz
     port: 5000
 readinessProbe:
   httpGet:
-    path: /
+    path: /readyz
     port: 5000
 
-✅ 7. Test Service Internally (from WSL)
+Make sure your Flask app has these endpoints defined.
+
+🧪 7. Test Endpoint Inside WSL
+
+Check your app is running correctly:
 
 curl http://myservice.local
 
@@ -261,33 +258,30 @@ Expected:
 
 Hello from K8s with Helm & GitOps!
 
-If you see 503, verify:
-
-Minikube tunnel is running
-
-Service points to correct target port (5000)
-
-Ingress rule host/path matches the request
-
-✅ 8. Access from Windows Browser
-
-Since WSL networking is isolated, run:
+🌐 8. Access Service via Browser on Windows
 
 minikube service myservice --url
 
-✅ Copy the exposed URL (e.g., http://127.0.0.1:32287) and open it in Windows browser.
+Copy the output URL (e.g., http://127.0.0.1:5000) and open in your Windows browser.
 
-✅ 9. (Optional) Restart ArgoCD UI (If Installed)
-
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-
-Then access in browser: https://localhost:8080
-
-✅ 10. Helm Upgrade Reminder
-
-If any chart file is updated (values.yaml, ingress.yaml, service.yaml):
+🔁 9. Re-deploy Helm Chart (After Any Changes)
 
 helm upgrade --install myservice ./charts/myservice
 
-Always re-run after updating chart templates or values.
+🧭 10. (Optional) Port-forward ArgoCD
 
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+Then open: https://localhost:8080
+
+✅ Summary
+
+This checklist covers the real-world setup issues we've encountered and solved:
+
+Ingress not resolving ➜ fixed via /etc/hosts
+
+Service not reachable from browser ➜ use minikube service
+
+Pod crashing ➜ liveness/readiness probe fixes
+
+Ingress returning 503 ➜ correct targetPort, service port, and ingress host setup
