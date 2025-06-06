@@ -184,13 +184,110 @@ kubectl apply -f gitops/myservice-app.yaml
 
 ---
 
-## Start the Minikube cluster & various commands
+✅ Daily Checklist: Minikube + WSL Dev Environment
+
+Before starting any Kubernetes development or testing with Minikube inside WSL, follow this checklist to ensure everything works smoothly.
+
+✅ 1. Start Minikube
+
 minikube start --driver=docker
 
-minikube stop
+✅ Ensure Docker is running before starting Minikube.
 
-kubectl get pods -A
+✅ 2. Start Minikube Tunnel (in a separate terminal)
 
-minikube status
+minikube tunnel
 
+✅ Required for ingress to route traffic. Keep this terminal open.
+
+✅ 3. Fix /etc/hosts DNS mapping (Run Every Time WSL is Restarted)
+
+echo '127.0.0.1 myservice.local' | sudo tee -a /etc/hosts > /dev/null
+
+WSL overwrites /etc/hosts on every restart. You must reapply this.
+
+✅ 4. (Optional One-Time) Prevent WSL from Overwriting /etc/hosts
+
+sudo nano /etc/wsl.conf
+
+Insert:
+
+[network]
+generateHosts = false
+
+Then restart WSL:
+
+wsl --shutdown
+
+✅ Do this only if you're okay with manual /etc/hosts persistence.
+
+✅ 5. Validate All Kubernetes Resources Are Running
+
+kubectl get pods -o wide
+kubectl get svc
+kubectl get ingress
+
+🔍 Check that pods are in Running state and ingress has an IP (127.0.0.1 usually).
+
+✅ 6. Troubleshoot Failing Pods (CrashLoopBackOff)
+
+Run:
+
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+
+Common Issues:
+
+❌ Liveness/Readiness probe path mismatch (/healthz, /readyz) — return 404
+
+❌ Wrong container port in service or ingress
+
+✅ Fix by updating values.yaml:
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 5000
+readinessProbe:
+  httpGet:
+    path: /
+    port: 5000
+
+✅ 7. Test Service Internally (from WSL)
+
+curl http://myservice.local
+
+Expected:
+
+Hello from K8s with Helm & GitOps!
+
+If you see 503, verify:
+
+Minikube tunnel is running
+
+Service points to correct target port (5000)
+
+Ingress rule host/path matches the request
+
+✅ 8. Access from Windows Browser
+
+Since WSL networking is isolated, run:
+
+minikube service myservice --url
+
+✅ Copy the exposed URL (e.g., http://127.0.0.1:32287) and open it in Windows browser.
+
+✅ 9. (Optional) Restart ArgoCD UI (If Installed)
+
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+Then access in browser: https://localhost:8080
+
+✅ 10. Helm Upgrade Reminder
+
+If any chart file is updated (values.yaml, ingress.yaml, service.yaml):
+
+helm upgrade --install myservice ./charts/myservice
+
+Always re-run after updating chart templates or values.
 
