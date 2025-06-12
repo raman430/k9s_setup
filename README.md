@@ -44,7 +44,14 @@ minikube start --driver=docker
 kubectl get nodes
 ```
 
----
+# 🛠️ Optional: Create a Shortcut Alias (k) for kubectl
+If you want k to work as a shortcut for kubectl, add the following line to your shell config file (~/.bashrc, ~/.zshrc, etc.):
+```
+alias k=kubectl
+Then apply the change:
+source ~/.bashrc  # or ~/.zshrc
+k get pods -A
+```
 
 ## 📦 Helm + K9s
 
