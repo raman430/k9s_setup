@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myservice-test
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/raman430/k9s_setup.git'
+    targetRevision: HEAD
+    path: charts/myservice
+    helm:
+      valueFiles:
+        - values-test.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

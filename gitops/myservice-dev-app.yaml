@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: myservice
+  name: myservice-dev
   namespace: argocd
 spec:
   project: default
@@ -9,9 +9,12 @@ spec:
     repoURL: 'https://github.com/raman430/k9s_setup.git'
     targetRevision: HEAD
     path: charts/myservice
+    helm:
+      valueFiles:
+        - values-dev.yaml
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: default
+    server: https://kubernetes.default.svc
+    namespace: dev
   syncPolicy:
     automated:
       prune: true

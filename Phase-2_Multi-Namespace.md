@@ -35,16 +35,123 @@ k9s_setup/
 │       └── values-prod.yaml       <-- ✅ New
 ├── README.md                      <-- ✅ Updated
 
-```
- Helm Commands to Deploy per Namespace
-```
-# Dev
-helm upgrade --install myservice-dev ./charts/myservice -f ./charts/myservice/values-dev.yaml --namespace dev --create-namespace
 
-# Test
-helm upgrade --install myservice-test ./charts/myservice -f ./charts/myservice/values-test.yaml --namespace test --create-namespace
+# 🚀 Phase 2: Multi-Namespace GitOps with Helm & Argo CD
 
-# Prod
-helm upgrade --install myservice-prod ./charts/myservice -f ./charts/myservice/values-prod.yaml --namespace prod --create-namespace
+This phase sets up a GitOps-ready Kubernetes lab on Minikube with support for `dev`, `test`, and `prod` environments using **Helm** and **Argo CD**.
 
+---
+
+## 📦 Helm Setup Across Namespaces
+
+Helm chart `charts/myservice` is deployed dynamically into different namespaces using three values files:
+- `values-dev.yaml`
+- `values-test.yaml`
+- `values-prod.yaml`
+
+Each values file defines:
+```yaml
+namespace: dev  # or test/prod
 ```
+
+Helm installs are executed using:
+```bash
+helm upgrade --install myservice-dev ./charts/myservice -f ./charts/myservice/values-dev.yaml
+helm upgrade --install myservice-test ./charts/myservice -f ./charts/myservice/values-test.yaml
+helm upgrade --install myservice-prod ./charts/myservice -f ./charts/myservice/values-prod.yaml
+```
+
+Namespace creation is handled dynamically via this Helm template:
+```yaml
+# templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}
+  labels:
+    environment: {{ .Values.namespace }}
+```
+
+---
+
+## 🚀 Argo CD GitOps Integration
+
+Argo CD is installed once and manages apps across all namespaces.
+
+### 📥 Installation Commands
+
+```bash
+kubectl create namespace argocd
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+### 🔍 Validate Installation
+
+```bash
+kubectl get pods -n argocd
+```
+
+### 🌐 Access Argo CD UI
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Visit http://localhost:8080
+```
+
+Get default password:
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
+---
+
+## 📄 Argo CD Application Definitions
+
+Example: `gitops/myservice-dev-app.yaml`
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myservice-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/k9s_setup.git
+    targetRevision: HEAD
+    path: charts/myservice
+    helm:
+      valueFiles:
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+Repeat for `test` and `prod` with appropriate values files and namespaces.
+
+Apply all:
+```bash
+kubectl apply -n argocd -f gitops/myservice-dev-app.yaml
+kubectl apply -n argocd -f gitops/myservice-test-app.yaml
+kubectl apply -n argocd -f gitops/myservice-prod-app.yaml
+```
+
+---
+
+## 🧠 Key Learnings
+
+- Helm templates support multi-namespace deployments via `.Values.namespace`
+- Argo CD CRDs must be installed for GitOps to work
+- Argo CD watches Git repo and reconciles deployments continuously
+- Access to all namespaces must be granted to Argo CD controller
+
+---
+
+✅ All Argo CD + multi-namespace work is part of this **Phase 2 GitOps foundation**.
