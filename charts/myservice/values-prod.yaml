@@ -34,12 +34,12 @@ service:
 
 ingress:
   enabled: true
-  hostname: myservice.local
+  hostname: dev.myservice.local
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
-    - host: myservice.local
+    - host: prod.myservice.local
       paths:
         - path: /
           pathType: Prefix
