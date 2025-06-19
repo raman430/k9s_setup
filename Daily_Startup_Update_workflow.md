@@ -18,7 +18,7 @@ Open in browser:
 ```
 https://localhost:9090
 ```
-🧪 Step 3: Port-Forward App Services (All Environments)
+🧪 Step 3: Port-Forward App Services (All Environments) -- in different wsl terminals
 ```
 kubectl port-forward svc/myservice-dev -n dev 9080:5000
 kubectl port-forward svc/myservice-test -n test 9081:5000
@@ -53,3 +53,8 @@ kubectl rollout restart deployment myservice-test -n test
 kubectl rollout restart deployment myservice-prod -n prod
 ```
 ✅ Step 5: Re-verify All Services
+```
+curl http://localhost:9080
+curl http://localhost:9081
+curl http://localhost:9082
+```
