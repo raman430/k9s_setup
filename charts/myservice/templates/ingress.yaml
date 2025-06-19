@@ -12,7 +12,7 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.hostname | quote }}
+    - host: {{ printf "%s.myservice.local" .Release.Namespace }}
       http:
         paths:
           - path: /
