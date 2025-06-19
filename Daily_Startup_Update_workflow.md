@@ -99,3 +99,39 @@ Mismatched port
 
 Relying only on "Synced" is misleading — always check the health status and pod logs for final confirmation.
 
+🌐 Hostname Mapping for Local URLs
+
+Problem
+
+Accessing URLs like http://dev.myservice.local/ doesn't work even after port-forwarding.
+
+Reason
+
+Custom hostnames like dev.myservice.local are not real DNS entries on your system.
+
+✅ Fix: Map Custom Hostname to localhost
+
+Step 1: Edit Your Hosts File
+
+On WSL/Ubuntu:
+```
+sudo nano /etc/hosts
+```
+On Windows (if browser is used there):
+Open C:\Windows\System32\drivers\etc\hosts in Notepad as Administrator.
+
+Step 2: Add This Line
+```
+127.0.0.1    dev.myservice.local
+```
+Step 3: Access the Service
+
+Now visit:
+```
+http://dev.myservice.local:9080
+```
+You still need port-forwarding running:
+```
+kubectl port-forward svc/myservice-dev -n dev 9080:5000
+```
+For DNS-free, port-free access (e.g. http://dev.myservice.local), you’ll need to set up an Ingress Controller + DNS, which can be covered in Phase 3.
