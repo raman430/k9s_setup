@@ -246,28 +246,16 @@ Topic
 
 Learning
 
-CrashLoopBackOff
+## 📘 Learnings Summary
 
-Use kubectl logs + describe to catch port/probe/image issues
+| Topic            | Learning                                                                 |
+|------------------|--------------------------------------------------------------------------|
+| CrashLoopBackOff | Use `kubectl logs` + `describe` to catch port/probe/image issues         |
+| Flask Networking | Always bind to `0.0.0.0` for containerized apps                          |
+| Helm Values      | Ensure `containerPort` and `service.port` are consistent                 |
+| Argo CD Sync     | Manual `argocd app sync` is essential for image tag updates              |
+| Port Forwarding  | Useful for debugging internal services locally                           |
+| Service Template | `targetPort` should reference `.Values.containerPort`                    |
 
-Flask Networking
-
-Always bind to 0.0.0.0 for containerized apps
-
-Helm Values
-
-Ensure containerPort and service.port are consistent
-
-Argo CD Sync
-
-Manual argocd app sync is essential for image tag updates
-
-Port Forwarding
-
-Useful for debugging internal services locally
-
-Service Template
-
-targetPort should reference .Values.containerPort
 
 =====================================
