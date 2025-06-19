@@ -58,3 +58,44 @@ curl http://localhost:9080
 curl http://localhost:9081
 curl http://localhost:9082
 ```
+
+📘 Argo CD UI & Sync vs Health Explained
+
+🎯 Argo CD Sync Status
+
+Synced: YAML from Git matches the live Kubernetes object.
+
+OutOfSync: The cluster differs from Git (manual edit, or drift).
+
+🚥 Argo CD Health Status
+
+Healthy: All resources are active and ready.
+
+Progressing: One or more resources are still rolling out.
+
+Degraded: A resource (like a pod) failed readiness or liveness.
+
+Missing: A resource from the Git manifest was deleted from the cluster.
+
+🧠 Key Insight
+
+Sync = YAML matches clusterHealth = App is actually running and ready
+
+🔧 How to Troubleshoot Failed Health
+```
+kubectl get pods -n <env>
+kubectl describe pod <pod> -n <env>
+kubectl logs <pod> -n <env>
+```
+Also: click on the resource tree in Argo CD UI to inspect issues like:
+
+Failed probe
+
+Image crash or exit
+
+Mismatched port
+
+🛑 Common Mistake
+
+Relying only on "Synced" is misleading — always check the health status and pod logs for final confirmation.
+
